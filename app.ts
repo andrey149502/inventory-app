@@ -1,3 +1,8 @@
+import { Component, NgModule, EventEmitter } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+// import { EventEmitter } from '@angular/core'
+
 class Product {
 	constructor(
 		public sku: string,
@@ -12,8 +17,6 @@ class Product {
 	selector: 'inventory-app',
 	template: `
 		<div class="inventory-app">
-			<h1>{{ product.name }}</h1>
-			<span>{{ product.sku }}</span>
 			<product-list
 				[productList]="products"
 				(onProductSelected)="productWasSelected($event)">
@@ -73,6 +76,97 @@ class ProductList {
 	currentProduct: Product;
 	
 	constructor() {
-		this.onProductSelected = new EventEmmitter();
+		this.onProductSelected = new EventEmitter();
+	}
+
+	clicked(product: Product): void {
+		this.currentProduct = product;
+		this.onProductSelected.emit(product);
+	}
+
+	isSelected(product: Product): boolean {
+		if (!product || !this.currentProduct) {
+			return false;
+		}
+		return product.sku === this.currentProduct.sku;
 	}
 }
+
+
+@Component({
+	selector: 'product-row',
+	inputs: ['product'],
+	host: {'class': 'item'},
+	template: `
+		<product-image [product]="product"></product-image>
+		<div class="content">
+			<div class="header">{{ product.name }}</div>
+			<div class="meta">
+				<div class="product-sku">SKU #{{ product.sku }}</div>
+			</div>
+			<div class="description">
+				<product-department [product]="product"></product-department>
+			</div>
+		</div>
+		<price-display [price]="product.price"></price-display>
+	`
+})
+class ProductRow {
+	product: Product;
+}
+
+
+@Component({
+	selector: 'product-image',
+	host: {class: 'ui small image'},
+	inputs: ['product'],
+	template: `
+		<img class="product-image" [src]="product.imageUrl">
+	`
+})
+class ProductImage {
+	product: Product;
+}
+
+
+@Component({
+	selector: 'price-display',
+	inputs: ['price'],
+	template: `
+		<div class="price-display">\${{ price }}</div>
+	`
+})
+class PriceDisplay {
+	price: number;
+}
+
+
+@Component({
+	selector: 'product-department',
+	inputs: ['product'],
+	template: `
+		<div class="product-department">
+			<span *ngFor="let name of product.department; let i=index">
+				<a href="#">{{ name }}</a>
+				<span>{{ i < (product.department.length-1) ? '>' : ''}}</span>
+	`
+})
+class ProductDepartment {
+	product: Product;
+}
+
+@NgModule({
+	declarations: [
+		InventoryApp,
+		ProductImage,
+		ProductDepartment,
+		PriceDisplay,
+		ProductRow,
+		ProductList
+	],
+	imports: [ BrowserModule ],
+	bootstrap: [ InventoryApp ]
+})
+class InventoryAppModule {}
+
+platformBrowserDynamic().bootstrapModule(InventoryAppModule);
